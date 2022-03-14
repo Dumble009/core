@@ -100,6 +100,8 @@ export const playback = {
     navigator.mediaSession!.setActionHandler('pause', () => this.pause())
     navigator.mediaSession!.setActionHandler('previoustrack', () => this.playPrev())
     navigator.mediaSession!.setActionHandler('nexttrack', () => this.playNext())
+    navigator.mediaSession!.setActionHandler('seekbackward', () => this.playPrev())
+    navigator.mediaSession!.setActionHandler('seekforward', () => this.playNext())
   },
 
   listenToMediaEvents (mediaElement: HTMLMediaElement): void {
