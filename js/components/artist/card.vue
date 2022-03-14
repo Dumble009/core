@@ -84,7 +84,7 @@ export default mixins(artistAttributes).extend({
 
   computed: {
     showing (): boolean {
-      return Boolean(this.artist.songs.length && !artistStore.isVariousArtists(this.artist))
+      return Boolean((this.artist.songs.length || this.artist.albums.length) && !artistStore.isVariousArtists(this.artist))
     }
   },
 
