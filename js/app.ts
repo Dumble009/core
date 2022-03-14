@@ -2,6 +2,7 @@
 import './static-loader'
 import Vue, { VNode, CreateElement } from 'vue'
 import App from './app.vue'
+import "./registerServiceWorker";
 import { http } from '@/services'
 
 if (KOEL_ENV === 'app') {
