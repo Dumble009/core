@@ -15,6 +15,7 @@ import {
 import { socket, audio as audioService } from '.'
 import { app, events } from '@/config'
 import router from '@/router'
+import song from '@/__tests__/factory/song'
 
 /**
  * The number of seconds before the current song ends to start preload the next one.
@@ -154,6 +155,21 @@ export const playback = {
     song.preloaded = true
   },
 
+  updateMediaSessionTitle(song : Song): void{
+    if (!isMediaSessionSupported) {
+      return
+    }
+
+    navigator.mediaSession!.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist.name,
+      album: song.album.name,
+      artwork: [
+        { src: song.album.cover, sizes: '256x256', type: 'image/png' }
+      ]
+    })
+  },
+
   /**
    * Play a song. Because
    *
@@ -209,23 +225,13 @@ export const playback = {
       // @link https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification
       console.error(e)
     }
-
-    if (isMediaSessionSupported) {
-      navigator.mediaSession!.metadata = new MediaMetadata({
-        title: song.title,
-        artist: song.artist.name,
-        album: song.album.name,
-        artwork: [
-          { src: song.album.cover, sizes: '256x256', type: 'image/png' }
-        ]
-      })
-    }
   },
 
   async restart () {
     const song = queueStore.current!
 
     this.showNotification(song)
+    this.updateMediaSessionTitle(song);
 
     // Record the UNIX timestamp the song starts playing, for scrobbling purpose
     song.playStartTime = Math.floor(Date.now() / 1000)
