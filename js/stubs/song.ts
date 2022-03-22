@@ -19,7 +19,8 @@ const song: Song = {
   playCountRegistered: false,
   preloaded: false,
   infoRetrieved: true,
-  playStartTime: 0
+  playStartTime: 0,
+  blobURL: ''
 }
 
 export default song

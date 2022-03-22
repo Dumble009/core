@@ -153,6 +153,7 @@ interface Song {
   liked: boolean
   playStartTime?: number
   fmtLength?: string
+  blobURL?: string
 }
 
 interface AlbumInfo {

@@ -150,10 +150,25 @@ export const playback = {
   },
 
   preload (song: Song): void {
-    const audioElement = document.createElement('audio')
+    /*const audioElement = document.createElement('audio')
     audioElement.setAttribute('src', songStore.getSourceUrl(song))
     audioElement.setAttribute('preload', 'auto')
     audioElement.load()
+    song.preloaded = true*/
+    console.log('request preload')
+    console.log(songStore.getSourceUrl(song))
+    const request = new XMLHttpRequest()
+    request.open('GET', songStore.getSourceUrl(song), true)
+    request.responseType = 'arraybuffer'
+
+    request.onload = function(){
+      console.log('preoad request onload')
+      console.log(request)
+      const blob = new Blob([request.response], {type: 'audio/mp3'})
+      const blobURL = window.URL.createObjectURL(blob)
+      song.blobURL = blobURL
+    }
+    request.send()
     song.preloaded = true
   },
 
@@ -197,7 +212,7 @@ export const playback = {
 
     // Manually set the `src` attribute of the audio to prevent plyr from resetting
     // the audio media object and cause our equalizer to malfunction.
-    this.getPlayer().media.src = songStore.getSourceUrl(song)
+    this.getPlayer().media.src = song.preloaded ? (song.blobURL?? '') : songStore.getSourceUrl(song)
 
     // We'll just "restart" playing the song, which will handle notification, scrobbling etc.
     // Fixes #898
