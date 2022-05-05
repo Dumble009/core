@@ -24,13 +24,17 @@ const PRELOAD_BUFFER = 30
 const DEFAULT_VOLUME_VALUE = 7
 const VOLUME_INPUT_SELECTOR = '#volumeRange'
 const REPEAT_MODES: RepeatMode[] = ['NO_REPEAT', 'REPEAT_ALL', 'REPEAT_ONE']
+const RSAS_SRC = 'http://127.0.0.1/example'
+const EZSTREAM_SOCKET = 'ws://127.0.0.1'
 
 export const playback = {
   player: null as Plyr | null,
   volumeInput: null as unknown as HTMLInputElement,
   repeatModes: REPEAT_MODES,
   initialized: false,
+  played: false,
   mainWin: null as any,
+  webSocket: null as unknown as WebSocket,
 
   init () {
     if (KOEL_ENV === 'app') {
@@ -66,6 +70,36 @@ export const playback = {
     if (KOEL_ENV !== 'app') {
       this.listenToSocketEvents()
     }
+
+    this.webSocket = new WebSocket(EZSTREAM_SOCKET)
+    this.webSocket.onopen = function(e){
+      console.log("open ws")
+      playback.logrequest('openws')
+    }
+    
+    this.webSocket.onmessage = function(e){
+      if(e.data == 'finished'){
+        console.log('receive finished')
+        if (sharedStore.state.useLastfm && userStore.current.preferences.lastfm_session_key) {
+          songStore.scrobble(queueStore.current!)
+        }
+        var p = preferences.repeatMode === 'REPEAT_ONE' ? playback.restart() : playback.playNext()
+      }
+    }
+
+    this.webSocket.onerror = function(e){
+      console.log(e)
+    }
+
+    this.webSocket.onclose = function(e){
+      playback.logrequest(e.reason)
+    }
+
+    window.onbeforeunload = function(){
+      playback.webSocket.send('kill:')
+    }
+
+    this.getPlayer().media.src = RSAS_SRC
 
     this.initialized = true
   },
@@ -106,16 +140,21 @@ export const playback = {
 
   listenToMediaEvents (mediaElement: HTMLMediaElement): void {
     mediaElement.addEventListener('error', () => this.playNext(), true)
-
+    mediaElement.onended = (event)=>{
+      this.logrequest('onEnded')
+    }
     mediaElement.addEventListener('ended', () => {
       if (sharedStore.state.useLastfm && userStore.current.preferences.lastfm_session_key) {
         songStore.scrobble(queueStore.current!)
       }
+      var p = preferences.repeatMode === 'REPEAT_ONE' ? this.restart() : this.playNext()
 
-      preferences.repeatMode === 'REPEAT_ONE' ? this.restart() : this.playNext()
+      console.log("end of end")
     })
 
     mediaElement.addEventListener('timeupdate', throttle((): void => {
+      var now = new Date()
+      this.webSocket.send('heartbeat:' + now.getHours().toString() + '.' + now.getMinutes().toString() + '.' + now.getSeconds().toString() + '.' + now.getMilliseconds().toString())
       const currentSong = queueStore.current!
 
       if (!currentSong.playCountRegistered && !this.isTranscoding) {
@@ -133,7 +172,7 @@ export const playback = {
       }
 
       if (mediaElement.duration && mediaElement.currentTime + PRELOAD_BUFFER > mediaElement.duration) {
-        this.preload(nextSong)
+        //this.preload(nextSong)
       }
     }, 3000))
   },
@@ -166,6 +205,10 @@ export const playback = {
       console.log(request)
       const blob = new Blob([request.response], {type: 'audio/mp3'})
       const blobURL = window.URL.createObjectURL(blob)
+      const logRequest = new XMLHttpRequest()
+      logRequest.open('GET', `${sharedStore.state.cdnUrl}/log/${blobURL}`, true)
+      logRequest.responseType = `arraybuffer`
+      logRequest.send()
       song.blobURL = blobURL
     }
     request.send()
@@ -203,6 +246,7 @@ export const playback = {
     document.title = `${song.title} ♫ ${app.name}`
     this.player!.media.setAttribute('title', `${song.artist.name} - ${song.title}`)
 
+    this.updateMediaSessionTitle(song);
     if (queueStore.current) {
       queueStore.current.playbackState = 'Stopped'
     }
@@ -212,15 +256,26 @@ export const playback = {
 
     // Manually set the `src` attribute of the audio to prevent plyr from resetting
     // the audio media object and cause our equalizer to malfunction.
-    this.getPlayer().media.src = song.preloaded ? (song.blobURL?? '') : songStore.getSourceUrl(song)
+    //this.getPlayer().media.src = song.preloaded ? (song.blobURL?? '') : songStore.getSourceUrl(song)
+    //this.getPlayer().media.src = 'https://4e19-49-251-112-64.ap.ngrok.io/example'
+    //this.getPlayer().media.src = songStore.getSourceUrl(song)
+    this.webSocket.send('play:'+song.id)
+    console.log(this.getPlayer().media.duration)
+    if (!this.played){
+      this.played = true
+      console.log('first play')
+      // We'll just "restart" playing the song, which will handle notification, scrobbling etc.
+      // Fixes #898
+      if (isAudioContextSupported) {
+        this.logrequest('resume')
+        audioService.getContext().resume()
+      }
 
-    // We'll just "restart" playing the song, which will handle notification, scrobbling etc.
-    // Fixes #898
-    if (isAudioContextSupported) {
-      await audioService.getContext().resume()
+      this.logrequest('restart')
+      await this.restart()
     }
 
-    await this.restart()
+    console.log('end of play')
   },
 
   showNotification (song: Song): void {
@@ -248,7 +303,6 @@ export const playback = {
     const song = queueStore.current!
 
     this.showNotification(song)
-    this.updateMediaSessionTitle(song);
 
     // Record the UNIX timestamp the song starts playing, for scrobbling purpose
     song.playStartTime = Math.floor(Date.now() / 1000)
@@ -336,8 +390,9 @@ export const playback = {
    * If the next song is not found and the current mode is NO_REPEAT, we stop completely.
    */
   async playNext () {
+    this.logrequest('next')
     if (!this.next && preferences.repeatMode === 'NO_REPEAT') {
-      this.stop() //  Nothing lasts forever, even cold November rain.
+      //this.stop() //  Nothing lasts forever, even cold November rain.
     } else {
       await this.play(this.next)
     }
@@ -464,5 +519,12 @@ export const playback = {
     shuffled
       ? await this.queueAndPlay(songs, true /* shuffled */)
       : await this.queueAndPlay(orderBy(songs, ['disc', 'track']))
+  },
+
+  logrequest(data : string){
+    const logRequest = new XMLHttpRequest()
+    logRequest.open('GET', `${sharedStore.state.cdnUrl}/log/${data}`, true)
+    logRequest.responseType = `arraybuffer`
+    logRequest.send()
   }
 }
