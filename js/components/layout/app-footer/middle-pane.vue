@@ -10,7 +10,7 @@
       </template>
 
       <div class="plyr">
-        <audio crossorigin="anonymous" controls></audio>
+        <audio crossorigin="anonymous" preload="none" controls></audio>
       </div>
     </div>
   </div>

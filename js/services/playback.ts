@@ -24,8 +24,8 @@ const PRELOAD_BUFFER = 30
 const DEFAULT_VOLUME_VALUE = 7
 const VOLUME_INPUT_SELECTOR = '#volumeRange'
 const REPEAT_MODES: RepeatMode[] = ['NO_REPEAT', 'REPEAT_ALL', 'REPEAT_ONE']
-const RSAS_SRC = 'http://127.0.0.1/example'
-const EZSTREAM_SOCKET = 'ws://127.0.0.1'
+const RSAS_SRC = 'http://127.0.0.1:8000/example'
+const EZSTREAM_SOCKET = 'ws://127.0.0.1:1112'
 
 export const playback = {
   player: null as Plyr | null,
@@ -260,7 +260,18 @@ export const playback = {
     //this.getPlayer().media.src = 'https://4e19-49-251-112-64.ap.ngrok.io/example'
     //this.getPlayer().media.src = songStore.getSourceUrl(song)
     this.webSocket.send('play:'+song.id)
-    console.log(this.getPlayer().media.duration)
+
+    this.showNotification(song)
+
+    // update song informations
+    // Record the UNIX timestamp the song starts playing, for scrobbling purpose
+    song.playStartTime = Math.floor(Date.now() / 1000)
+
+    song.playCountRegistered = false
+
+    eventBus.emit(events.SONG_STARTED, song)
+
+    socket.broadcast(events.SOCKET_SONG, songStore.generateDataToBroadcast(song))
     if (!this.played){
       this.played = true
       console.log('first play')
