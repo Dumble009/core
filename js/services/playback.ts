@@ -24,8 +24,8 @@ const PRELOAD_BUFFER = 30
 const DEFAULT_VOLUME_VALUE = 7
 const VOLUME_INPUT_SELECTOR = '#volumeRange'
 const REPEAT_MODES: RepeatMode[] = ['NO_REPEAT', 'REPEAT_ALL', 'REPEAT_ONE']
-const RSAS_SRC = 'http://127.0.0.1:8000/example'
-const EZSTREAM_SOCKET = 'ws://127.0.0.1:1112'
+const RSAS_SRC = 'https://d9ac-49-251-112-64.ap.ngrok.io/example'
+const EZSTREAM_SOCKET = 'wss://03ae-49-251-112-64.ap.ngrok.io'
 
 export const playback = {
   player: null as Plyr | null,
@@ -500,6 +500,10 @@ export const playback = {
     }
 
     queueStore.replaceQueueWith(songs)
+
+    if(!this.played){
+      await this.getPlayer().media.play()
+    }
 
     // Wrap this inside a nextTick() to wait for the DOM to complete updating
     // and then play the first song in the queue.

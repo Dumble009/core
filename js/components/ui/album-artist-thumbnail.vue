@@ -78,8 +78,12 @@ export default Vue.extend({
   methods: {
     playOrQueue (e: KeyboardEvent) {
       if (e.metaKey || e.ctrlKey) {
+        console.log('queueStore.queue')
+        playback.logrequest('queue')
         queueStore.queue(orderBy(this.entity.songs, this.sortFields))
       } else {
+        console.log('playbackFunc.call')
+        playback.logrequest('playbackFunc')
         this.playbackFunc.call(playback, this.entity, false)
       }
     },
