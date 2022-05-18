@@ -76,7 +76,7 @@ export default Vue.extend({
       if (!queueStore.contains(this.song)) {
         queueStore.queueAfterCurrent(this.song)
       }
-
+      playback.reset()
       playback.play(this.song)
     },
 

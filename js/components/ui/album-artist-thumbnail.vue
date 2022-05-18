@@ -82,8 +82,6 @@ export default Vue.extend({
         playback.logrequest('queue')
         queueStore.queue(orderBy(this.entity.songs, this.sortFields))
       } else {
-        console.log('playbackFunc.call')
-        playback.logrequest('playbackFunc')
         this.playbackFunc.call(playback, this.entity, false)
       }
     },
