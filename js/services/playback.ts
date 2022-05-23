@@ -24,8 +24,8 @@ const PRELOAD_BUFFER = 30
 const DEFAULT_VOLUME_VALUE = 7
 const VOLUME_INPUT_SELECTOR = '#volumeRange'
 const REPEAT_MODES: RepeatMode[] = ['NO_REPEAT', 'REPEAT_ALL', 'REPEAT_ONE']
-const RSAS_SRC = 'https://8d53-49-251-112-64.jp.ngrok.io/example'
-const EZSTREAM_SOCKET = 'wss://8065-49-251-112-64.jp.ngrok.io'
+const RSAS_SRC = 'https://43d9-49-251-112-64.jp.ngrok.io/example'
+const EZSTREAM_SOCKET = 'wss://5d89-49-251-112-64.jp.ngrok.io'
 
 export const playback = {
   player: null as Plyr | null,
