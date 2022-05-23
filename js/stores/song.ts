@@ -60,6 +60,7 @@ export const songStore = {
 
     artist.songs = unionBy(artist.songs || [], [song], 'id')
     album.songs = unionBy(album.songs || [], [song], 'id')
+    album.artist.songs = unionBy(album.artist.songs || [], [song], 'id')
 
     // now if the song is part of a compilation album, the album must be added
     // into its artist as well
