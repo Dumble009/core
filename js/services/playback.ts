@@ -15,6 +15,7 @@ import {
 import { socket, audio as audioService } from '.'
 import { app, events } from '@/config'
 import router from '@/router'
+import { EZSTREAM_SOCKET, RSAS_SRC } from './addresses'
 import song from '@/__tests__/factory/song'
 
 /**
@@ -24,8 +25,8 @@ const PRELOAD_BUFFER = 30
 const DEFAULT_VOLUME_VALUE = 7
 const VOLUME_INPUT_SELECTOR = '#volumeRange'
 const REPEAT_MODES: RepeatMode[] = ['NO_REPEAT', 'REPEAT_ALL', 'REPEAT_ONE']
-const RSAS_SRC = 'https://43d9-49-251-112-64.jp.ngrok.io/example'
-const EZSTREAM_SOCKET = 'wss://5d89-49-251-112-64.jp.ngrok.io'
+//const RSAS_SRC = 'https://43d9-49-251-112-64.jp.ngrok.io/example'
+//const EZSTREAM_SOCKET = 'wss://5d89-49-251-112-64.jp.ngrok.io'
 
 export const playback = {
   player: null as Plyr | null,
