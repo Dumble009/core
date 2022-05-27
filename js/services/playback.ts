@@ -36,6 +36,7 @@ export const playback = {
   played: false,
   mainWin: null as any,
   webSocket: null as unknown as WebSocket,
+  isShuffled: false as boolean,
 
   init () {
     if (KOEL_ENV === 'app') {
@@ -403,11 +404,20 @@ export const playback = {
    */
   async playNext () {
     this.logrequest('next')
-    if (!this.next && preferences.repeatMode === 'NO_REPEAT') {
-      //this.stop() //  Nothing lasts forever, even cold November rain.
-    } else {
-      await this.play(this.next)
+    var nextSong = this.next;
+    if(this.isShuffled) {
+      while(nextSong && this.isSkipArtist(nextSong.artist.name)) {
+        queueStore.current = nextSong;
+        nextSong = this.next;
+      }
     }
+    if (nextSong || preferences.repeatMode !== 'NO_REPEAT') {
+      await this.play(nextSong)
+    }
+  },
+
+  isSkipArtist(artist_name : string): boolean{
+    return artist_name === 'カラオケ' || artist_name === 'ドラマ';
   },
 
   /**
@@ -488,6 +498,7 @@ export const playback = {
    * @param {Boolean=false}   shuffled Whether to shuffle the songs before playing.
    */
   async queueAndPlay (songs?: Song[], shuffled: boolean = false) {
+    this.isShuffled = shuffled;
     if (!songs) {
       songs = shuffle(songStore.all)
     }
